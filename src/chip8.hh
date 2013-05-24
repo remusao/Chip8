@@ -11,6 +11,7 @@
 
 namespace chip8
 {
+    // Private namespace to hide some implementation
     namespace
     {
         unsigned char chip8_fontset[80] =
@@ -32,9 +33,28 @@ namespace chip8
             0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
             0xF0, 0x80, 0xF0, 0x80, 0x80  // F
         };
+
+
+        // Used to retreive some part of a 16-bits word
+        template <unsigned offset, typename Word>
+        Word get(Word opcode)
+        {
+            return (opcode >> (12 - offset * 4) & 0x000F);
+        }
+
+        // Used to log information on cerr
+        void log(const char* m1, const char* m2)
+        {
+            std::cerr << m1 << m2 << std::endl;
+        }
+
+        void log(const char* message)
+        {
+            std::cerr << message << std::endl;
+        }
     }
 
-    template <typename Byte, typename TwoBytes>
+    template <typename Byte, typename Word>
     class Chip8
     {
         public:
@@ -48,50 +68,47 @@ namespace chip8
 
         private:
 
-            void decode(TwoBytes opcode);
-            template <unsigned offset>
-            Byte get(TwoBytes opcode);
+            // Decode and execute one opcode
+            void decode(Word opcode);
 
             // Chip8 internal
             std::array<Byte, 4096>      memory_; // Memory
             std::array<Byte, 16>        registers_; // registers
-            TwoBytes                    I_; // Index register
-            TwoBytes                    pc_; // program counter
+            Word                        I_; // Index register
+            Word                        pc_; // program counter
             std::array<Byte, 64 * 32>   gfx_; // Screen
 
             // Timers
-            Byte        delay_timer_;
-            Byte        sound_timer_;
+            Byte                        delay_timer_;
+            Byte                        sound_timer_;
 
             // Stack
-            std::array<TwoBytes, 16>    stack_;
-            TwoBytes                    sp_;
+            std::array<Word, 16>        stack_;
+            Word                        sp_;
 
             // Gamepad
             std::array<Byte, 16>        key_;
     };
 
 
-    template <typename Byte, typename TwoBytes>
-    void Chip8<Byte, TwoBytes>::initialize()
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::initialize()
     {
+        log("Initializing chip8 emulator");
+
         // Static checks
         static_assert(sizeof(Byte) == 1, "sizeof (Byte) != 1");
-        static_assert(sizeof(TwoBytes) == 2, "sizeof (TwoBytes) != 2");
+        static_assert(sizeof(Word) == 2, "sizeof (Word) != 2");
 
-        std::cerr << "Initializing chip8 emulator" << std::endl;
-
-        // Init random generator
-        std::cerr << "Init random generator" << std::endl;
+        log("Init random generator");
         srand(time(NULL));
 
-        // Init internals
-        std::cerr << "Init internals" << std::endl;
+        log("Init internals");
         memory_.fill(0);
         registers_.fill(0);
-        I_ = 0;
-        pc_ = 0x200;
         gfx_.fill(0);
+        I_  = 0;
+        pc_ = 0x200;
 
         delay_timer_ = 0;
         sound_timer_ = 0;
@@ -102,18 +119,20 @@ namespace chip8
         key_.fill(0);
 
         // Load fontset
-        std::cerr << "Init fontset" << std::endl;
+        log("Init fontset");
         for(int i = 0; i < 80; ++i)
             memory_[i] = chip8_fontset[i];
     }
 
 
-    template <typename Byte, typename TwoBytes>
-    void Chip8<Byte, TwoBytes>::loadGame(const char* rom)
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::loadGame(const char* rom)
     {
         std::ifstream ifs;
         ifs.open(rom, std::ifstream::in);
-        std::cerr << "Loading game: " << rom << std::endl;
+
+        log("Loading game: ", rom);
+
         for (unsigned i = 0; ifs.good(); ++i)
         {
             char c = ifs.get();       // get character from file
@@ -124,10 +143,10 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename TwoBytes>
-    void Chip8<Byte, TwoBytes>::cycle()
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::cycle()
     {
-        // Used to synchronize emulate at 60 Hz
+        // Used to emulate at 60 Hz
         static sf::Clock    clock;
         static unsigned     nbCycles = 0;
 
@@ -140,8 +159,8 @@ namespace chip8
         if (nbCycles < 60)
         {
             // Fetch opcode
-            TwoBytes opcode =
-                (memory_[pc_] << sizeof (TwoBytes) * 8)
+            Word opcode =
+                (memory_[pc_] << sizeof (Word) * 8)
                 | memory_[pc_ + 1];
 
             // Decode and execute opcode
@@ -163,15 +182,8 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename TwoBytes>
-    template <unsigned offset>
-    Byte Chip8<Byte, TwoBytes>::get(TwoBytes opcode)
-    {
-        return (opcode >> (12 - offset * 4) & 0x000F);
-    }
-
-    template <typename Byte, typename TwoBytes>
-    void Chip8<Byte, TwoBytes>::decode(TwoBytes opcode)
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::decode(Word opcode)
     {
         Byte tmp; // used for sum and sub
 
