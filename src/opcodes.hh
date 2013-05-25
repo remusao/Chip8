@@ -50,109 +50,109 @@ namespace chip8
         switch (opcode)
         {
             case CLEAR:
-                error("Clear");
+                debug("Clear");
                 break;
             case RETURNS:
-                error("Returns");
+                debug("Returns");
                 break;
             case JUMP:
-                error("Jumps");
+                debug("Jumps");
                 break;
             case CALL:
-                error("Calls");
+                debug("Calls");
                 break;
             case SKIPS_EQ_XNN:
-                error("Skip_eq_xnn");
+                debug("Skip_eq_xnn");
                 break;
             case SKIPS_NEQ_XNN:
-                error("Skip_neq_xnn");
+                debug("Skip_neq_xnn");
                 break;
             case SKIPS_EQ_XY:
-                error("Skip_eq_xy");
+                debug("Skip_eq_xy");
                 break;
             case SKIPS_NEQ_XY:
-                error("Skip_neq_xy");
+                debug("Skip_neq_xy");
                 break;
             case SET_XNN:
-                error("Set_xnn");
+                debug("Set_xnn");
                 break;
             case ADD_XNN:
-                error("Add_xnn");
+                debug("Add_xnn");
                 break;
             case SET_XY:
-                error("Set_xy");
+                debug("Set_xy");
                 break;
             case SET_OR_XY:
-                error("Set_or_xy");
+                debug("Set_or_xy");
                 break;
             case SET_AND_XY:
-                error("Set_and_xy");
+                debug("Set_and_xy");
                 break;
             case SET_XOR_XY:
-                error("Set_xor_xy");
+                debug("Set_xor_xy");
                 break;
             case ADD_CARRY_XY:
-                error("Add_carry_xy");
+                debug("Add_carry_xy");
                 break;
             case SUB_BORROW_XY:
-                error("Sub_borrow_xy");
+                debug("Sub_borrow_xy");
                 break;
             case SHIFT_RIGHT_X:
-                error("Shift_right_x");
+                debug("Shift_right_x");
                 break;
             case SHIFT_LEFT_X:
-                error("Shift_left_x");
+                debug("Shift_left_x");
                 break;
             case SUB_BORROW_YX:
-                error("Sub_borrow_yx");
+                debug("Sub_borrow_yx");
                 break;
             case SET_INN:
-                error("Set_inn");
+                debug("Set_inn");
                 break;
             case JUMP_0NNN:
-                error("Jump_0NNN");
+                debug("Jump_0NNN");
                 break;
             case RAND:
-                error("Rand");
+                debug("Rand");
                 break;
             case DRAW:
-                error("Draw");
+                debug("Draw");
                 break;
             case SKIPS_PRESS:
-                error("Skips_press");
+                debug("Skips_press");
                 break;
             case SKIPS_NPRESS:
-                error("Skips_npress");
+                debug("Skips_npress");
                 break;
             case SET_XTIMER:
-                error("Set_xTimer");
+                debug("Set_xTimer");
                 break;
             case KEY_AWAIT:
-                error("Key_wait");
+                debug("Key_wait");
                 break;
             case SET_TIMERX:
-                error("Set_Timerx");
+                debug("Set_Timerx");
                 break;
             case SET_SOUNDX:
-                error("Set_Soundx");
+                debug("Set_Soundx");
                 break;
             case ADD_IX:
-                error("Add_Ix");
+                debug("Add_Ix");
                 break;
             case SET_I_SPRITE:
-                error("Set_I_Sprite");
+                debug("Set_I_Sprite");
                 break;
             case STORE_BINARY:
-                error("Store_Binary");
+                debug("Store_Binary");
                 break;
             case STORE_0X:
-                error("Store_0x");
+                debug("Store_0x");
                 break;
             case FILLS_0X:
-                error("Fills_0X");
+                debug("Fills_0X");
                 break;
             case UNKNOWN:
-                error("Unknown");
+                debug("Unknown");
                 break;
         };
 #endif

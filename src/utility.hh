@@ -10,9 +10,9 @@ namespace chip8
         return (opcode >> (12 - offset * 4)) & 0x000F;
     }
 
-    // Used to error information on cerr
+    // Used to debug information on cerr
     template <typename T>
-    void error(T message)
+    void debug(T message)
     {
 # ifdef DEBUG
         std::cerr << message << std::endl;
@@ -20,11 +20,11 @@ namespace chip8
     }
 
     template <typename T, typename... Args>
-    void error(T e, Args... args)
+    void debug(T e, Args... args)
     {
 # ifdef DEBUG
         std::cerr << e;
-        error(args...);
+        debug(args...);
 # endif
     }
 }
