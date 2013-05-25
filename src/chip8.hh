@@ -43,7 +43,8 @@ namespace chip8
         }
 
         // Used to log information on cerr
-        void log(const char* m1, const char* m2)
+        template <typename T>
+        void log(const char* m1, T m2)
         {
             std::cerr << m1 << m2 << std::endl;
         }
@@ -52,9 +53,42 @@ namespace chip8
         {
             std::cerr << message << std::endl;
         }
+
+        unsigned getKey()
+        {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+                return 4;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+                return 5;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+                return 6;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
+                return 7;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+                return 8;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+                return 9;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+                return 10;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+                return 11;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
+                return 12;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::X))
+                return 13;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
+                return 14;
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V))
+                return 15;
+            else
+                return 16;
+        }
     }
 
-    template <typename Byte, typename Word>
+
+    /// @class Chip8
+    /// @brief Class for Chip8 emulator
+    template <typename Byte, typename Word, unsigned scale>
     class Chip8
     {
         public:
@@ -66,17 +100,28 @@ namespace chip8
             void loadGame(const char* rom);
             void cycle();
 
+            bool getDrawFlag() const { return drawFlag_; }
+            void setDrawFlag(bool value) { drawFlag_ = value; }
+
+            // Update key pressed
+            void setKey();
+            // Draw
+            void draw(sf::RenderWindow& window) const;
+
         private:
 
             // Decode and execute one opcode
             void decode(Word opcode);
+            // Draw a sprite
+            void drawSprite(Word opcode);
 
             // Chip8 internal
             std::array<Byte, 4096>      memory_; // Memory
             std::array<Byte, 16>        registers_; // registers
             Word                        I_; // Index register
             Word                        pc_; // program counter
-            std::array<Byte, 64 * 32>   gfx_; // Screen
+            std::array<bool, 64 * 32>   screen_; // Screen
+            bool                        drawFlag_;
 
             // Timers
             Byte                        delay_timer_;
@@ -87,12 +132,12 @@ namespace chip8
             Word                        sp_;
 
             // Gamepad
-            std::array<Byte, 16>        key_;
+            std::array<bool, 16>        key_;
     };
 
 
-    template <typename Byte, typename Word>
-    void Chip8<Byte, Word>::initialize()
+    template <typename Byte, typename Word, unsigned scale>
+    void Chip8<Byte, Word, scale>::initialize()
     {
         log("Initializing chip8 emulator");
 
@@ -106,7 +151,8 @@ namespace chip8
         log("Init internals");
         memory_.fill(0);
         registers_.fill(0);
-        gfx_.fill(0);
+        screen_.fill(false);
+        drawFlag_ = true;
         I_  = 0;
         pc_ = 0x200;
 
@@ -125,8 +171,8 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename Word>
-    void Chip8<Byte, Word>::loadGame(const char* rom)
+    template <typename Byte, typename Word, unsigned scale>
+    void Chip8<Byte, Word, scale>::loadGame(const char* rom)
     {
         std::ifstream ifs;
         ifs.open(rom, std::ifstream::in);
@@ -143,8 +189,59 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename Word>
-    void Chip8<Byte, Word>::cycle()
+    template <typename Byte, typename Word, unsigned scale>
+    void Chip8<Byte, Word, scale>::setKey()
+    {
+        key_[getKey()] = true;
+    }
+
+
+    template <typename Byte, typename Word, unsigned scale>
+    void Chip8<Byte, Word, scale>::draw(sf::RenderWindow& window) const
+    {
+        for (unsigned y = 0; y < 64; ++y)
+        {
+            for (unsigned x = 0; x < 32; ++x)
+            {
+                if (screen_[y * 64 + x])
+                {
+                    sf::RectangleShape sprite(sf::Vector2f(scale, scale));
+                    sprite.setPosition(x * scale, y * scale);
+                    sprite.setFillColor(sf::Color::White);
+                    window.draw(sprite);
+                }
+            }
+        }
+    }
+
+
+    template <typename Byte, typename Word, unsigned scale>
+    void Chip8<Byte, Word, scale>::drawSprite(Word opcode)
+    {
+        Word x = registers_[get<1>(opcode)];
+        Word y = registers_[get<2>(opcode)];
+        Word height = opcode & 0x000F;
+        Word pixel;
+
+        registers_[15] = 0;
+        for (int yline = 0; yline < height; ++yline)
+        {
+            pixel = memory_[I_ + yline];
+            for (int xline = 0; xline < 8; ++xline)
+            {
+                if ((pixel & (0x80 >> xline)) != 0)
+                {
+                    if (screen_[(x + xline + ((y + yline) * 64))])
+                        registers_[15] = 1;
+                    screen_[x + xline + ((y + yline) * 64)] ^= true;
+                }
+            }
+        }
+    }
+
+
+    template <typename Byte, typename Word, unsigned scale>
+    void Chip8<Byte, Word, scale>::cycle()
     {
         // Used to emulate at 60 Hz
         static sf::Clock    clock;
@@ -162,6 +259,9 @@ namespace chip8
             Word opcode =
                 (memory_[pc_] << sizeof (Word) * 8)
                 | memory_[pc_ + 1];
+
+            // Jump to next instruction
+            pc_ += 2;
 
             // Decode and execute opcode
             decode(opcode);
@@ -182,10 +282,11 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename Word>
-    void Chip8<Byte, Word>::decode(Word opcode)
+    template <typename Byte, typename Word, unsigned scale>
+    void Chip8<Byte, Word, scale>::decode(Word opcode)
     {
-        Byte tmp; // used for sum and sub
+        Byte        tmp; // used for sum and sub
+        sf::Event   event; // used to wait for an event
 
         switch (opcode >> 12)
         {
@@ -194,7 +295,7 @@ namespace chip8
                 {
                     case 0x00E0:
                         // 00E0 - Clear screen
-                        gfx_.fill(0);
+                        screen_.fill(false);
                         break;
                     case 0x00EE:
                         // 00EE - Returns from a subroutine
@@ -290,7 +391,7 @@ namespace chip8
                         registers_[get<1>(opcode)] <<= 1;
                         break;
                     default:
-                        std::cerr << "Unknown instruction: " << opcode << std::endl;
+                        log("Unknown instruction: ", opcode);
                         break;
                 };
                 break;
@@ -323,18 +424,21 @@ namespace chip8
                 // As described above, VF is set to 1 if any screen
                 // pixels are flipped from set to unset when the sprite
                 // is drawn, and to 0 if that doesn't happen
-                // TODO
+                drawSprite(opcode);
+                drawFlag_ = true;
                 break;
             case 14:
                 switch (opcode & 0x00FF)
                 {
                     case 0x009E:
                         // EX9E - Skips the next instruction if the key stored in VX is pressed
-                        // TODO
+                        if (key_[registers_[get<1>(opcode)]])
+                            pc_ += 2;
                         break;
                     case 0x00A1:
                         // EXA1 - Skips the next instruction if the key stored in VX isn't pressed
-                        // TODO
+                        if (!key_[registers_[get<1>(opcode)]])
+                            pc_ += 2;
                         break;
                 };
                 break;
@@ -347,7 +451,12 @@ namespace chip8
                         break;
                     case 0x000A:
                         // FX0A - A key press is awaited, and then stored in VX
-                        // TODO
+                        do
+                        {
+                            if (event.type == sf::Event::KeyPressed)
+                                registers_[get<1>(opcode)] = getKey();
+
+                        } while (event.type != sf::Event::KeyPressed);
                         break;
                     case 0x0015:
                         // FX15 - Sets the delay timer to VX
@@ -366,7 +475,7 @@ namespace chip8
                         // FX29 - Sets I to the location of the sprite for the character
                         // in VX. Characters 0-F (in hexadecimal) are represented by a
                         // 4x5 font
-                        // TODO
+                        I_ = registers_[get<1>(opcode)] * 10;
                         break;
                     case 0x0033:
                         // FX33 - Stores the Binary-coded decimal representation of VX,
@@ -375,7 +484,6 @@ namespace chip8
                         // at I plus 2. (In other words, take the decimal representation
                         // of VX, place the hundreds digit in memory at location in I, the
                         // tens digit at location I+1, and the ones digit at location I+2.)
-                        // TODO
                         memory_[I_]     = registers_[(opcode & 0x0F00) >> 8] / 100;
                         memory_[I_ + 1] = (registers_[(opcode & 0x0F00) >> 8] / 10) % 10;
                         memory_[I_ + 2] = (registers_[(opcode & 0x0F00) >> 8] % 100) % 10;
@@ -394,7 +502,7 @@ namespace chip8
                 };
                 break;
             default:
-                std::cerr << "Unknown instruction: " << opcode << std::endl;
+                log("Unknown instruction: ", opcode);
                 break;
         };
     }

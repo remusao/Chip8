@@ -1,16 +1,17 @@
 #include "chip8.hh"
 
+#define SCALE 4
 
 int main(int argc, char *argv[])
 {
     if (argc > 1)
     {
-        chip8::Chip8<unsigned char, unsigned short> chip8;
+        chip8::Chip8<unsigned char, unsigned short, SCALE> chip8;
+        unsigned width = 64;
+        unsigned height = 32;
 
         // Graphics
-        sf::RenderWindow window(sf::VideoMode(64, 32), "Chip8 Emulator");
-        sf::CircleShape shape(10.f);
-        shape.setFillColor(sf::Color::Green);
+        sf::RenderWindow window(sf::VideoMode(width * SCALE, height * SCALE), "Chip8 Emulator");
 
         // init
         chip8.initialize();
@@ -23,16 +24,30 @@ int main(int argc, char *argv[])
         while (window.isOpen())
         {
             chip8.cycle();
+
+            if (chip8.getDrawFlag())
+            {
+                window.clear();
+                chip8.draw(window);
+                window.display();
+                chip8.setDrawFlag(false);
+            }
+
             sf::Event event;
             while (window.pollEvent(event))
             {
-                if (event.type == sf::Event::Closed)
-                    window.close();
+                switch (event.type)
+                {
+                    case sf::Event::Closed:
+                        window.close();
+                        break;
+                    case sf::Event::KeyPressed:
+                        chip8.setKey();
+                        break;
+                    default:
+                        break;
+                };
             }
-
-            window.clear();
-            window.draw(shape);
-            window.display();
         }
     }
     return 0;
