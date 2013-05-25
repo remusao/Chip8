@@ -3,7 +3,6 @@
 
 # include <fstream>
 # include <iostream>
-# include <limits>
 # include <stdlib.h>
 # include <stdio.h>
 # include <array>
@@ -203,7 +202,7 @@ namespace chip8
         {
             for (unsigned x = 0; x < 32; ++x)
             {
-                if (screen_[y * 64 + x])
+                if (screen_[y * x])
                 {
                     sf::RectangleShape sprite(sf::Vector2f(scale, scale));
                     sprite.setPosition(x * scale, y * scale);
@@ -296,10 +295,12 @@ namespace chip8
                     case 0x00E0:
                         // 00E0 - Clear screen
                         screen_.fill(false);
+                        drawFlag_ = true;
                         break;
                     case 0x00EE:
                         // 00EE - Returns from a subroutine
                         --sp_;
+                        pc_ = stack_[sp_];
                         break;
                     default:
                         // 0NNN - Calls RCA 1802 program at address NNN
@@ -309,11 +310,13 @@ namespace chip8
                 break;
             case 1:
                 // 1NNN - Jumps to address NNN
-                pc_ = opcode | 0x0FFF;
+                pc_ = opcode & 0x0FFF;
                 break;
             case 2:
                 // 2NNN - Calls subroutine at NNN
-                stack_[sp_++] = pc_;
+                ++sp_;
+                stack_[sp_] = pc_;
+                pc_ = opcode & 0x0FFF;
                 break;
             case 3:
                 // 3XNN - Skips the next instruction if VX equals NN
@@ -321,7 +324,7 @@ namespace chip8
                     pc_ += 2;
                 break;
             case 4:
-                // 3XNN - Skips the next instruction if VX doesn't equal NN
+                // 4XNN - Skips the next instruction if VX doesn't equal NN
                 if (registers_[get<1>(opcode)] != (opcode & 0x00FF))
                     pc_ += 2;
                 break;
@@ -374,7 +377,7 @@ namespace chip8
                     case 6:
                         // 8XY6 - Shifts VX right by one. VF is set to the value
                         // of the least significant bit of VX before the shift
-                        registers_[15] = registers_[get<1>(opcode)] & 0x0001;
+                        registers_[15] = registers_[get<1>(opcode)] & 0x1;
                         registers_[get<1>(opcode)] >>= 1;
                         break;
                     case 7:
@@ -387,7 +390,7 @@ namespace chip8
                     case 15:
                         // 8XYE - Shifts VX left by one. VF is set to the value
                         // of the most significant bit of VX before the shift
-                        registers_[15] = 0x0001 & ((registers_[get<1>(opcode)] & 0x8000) >> 15);
+                        registers_[15] = registers_[get<1>(opcode)] >> 7;
                         registers_[get<1>(opcode)] <<= 1;
                         break;
                     default:
@@ -410,9 +413,7 @@ namespace chip8
                 break;
             case 12:
                 // CXNN - Sets VX to a random number and NN
-                registers_[get<1>(opcode)] =
-                    (rand() % std::numeric_limits<Byte>::max())
-                    & (opcode & 0x00FF);
+                registers_[get<1>(opcode)] = (rand() % 0xFF) & (opcode & 0x00FF);
                 break;
             case 13:
                 // DXYN - Draws a sprite at coordinate (VX, VY) that has
@@ -475,7 +476,7 @@ namespace chip8
                         // FX29 - Sets I to the location of the sprite for the character
                         // in VX. Characters 0-F (in hexadecimal) are represented by a
                         // 4x5 font
-                        I_ = registers_[get<1>(opcode)] * 10;
+                        I_ = registers_[get<1>(opcode)] * 0x5;
                         break;
                     case 0x0033:
                         // FX33 - Stores the Binary-coded decimal representation of VX,
@@ -487,17 +488,18 @@ namespace chip8
                         memory_[I_]     = registers_[(opcode & 0x0F00) >> 8] / 100;
                         memory_[I_ + 1] = (registers_[(opcode & 0x0F00) >> 8] / 10) % 10;
                         memory_[I_ + 2] = (registers_[(opcode & 0x0F00) >> 8] % 100) % 10;
-                        pc_ += 2;
                         break;
                     case 0x0055:
                         // FX55 - Stores V0 to VX in memory starting at address I
-                        for (unsigned i = 0; i < get<1>(opcode); ++i)
+                        for (unsigned i = 0; i <= get<1>(opcode); ++i)
                             memory_[i + I_] = registers_[i];
+					    I_ += get<1>(opcode) + 1;
                         break;
                     case 0x0065:
                         // FX65 - Fills V0 to VX with values from memory starting at address I
-                        for (unsigned i = 0; i < get<1>(opcode); ++i)
+                        for (unsigned i = 0; i <= get<1>(opcode); ++i)
                             registers_[i] = memory_[i + I_];
+					    I_ += get<1>(opcode) + 1;
                         break;
                 };
                 break;

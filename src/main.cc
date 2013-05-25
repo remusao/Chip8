@@ -1,17 +1,17 @@
 #include "chip8.hh"
 
 #define SCALE 4
+#define WIDTH 64
+#define HEIGHT 32
 
 int main(int argc, char *argv[])
 {
     if (argc > 1)
     {
         chip8::Chip8<unsigned char, unsigned short, SCALE> chip8;
-        unsigned width = 64;
-        unsigned height = 32;
 
         // Graphics
-        sf::RenderWindow window(sf::VideoMode(width * SCALE, height * SCALE), "Chip8 Emulator");
+        sf::RenderWindow window(sf::VideoMode(WIDTH * SCALE, HEIGHT * SCALE), "Chip8 Emulator");
 
         // init
         chip8.initialize();
