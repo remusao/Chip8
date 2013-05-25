@@ -294,8 +294,7 @@ namespace chip8
                 break;
             case CALL:
                 // 2NNN - Calls subroutine at NNN
-                ++sp_;
-                stack_[sp_] = pc_;
+                stack_[sp_++] = pc_;
                 pc_ = (opcode & 0x0FFF);
                 debug("Calls ", pc_);
                 break;
