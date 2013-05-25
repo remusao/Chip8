@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-std=c++11 -DDEBUG -g -Wall -Wextra -lsfml-graphics -lsfml-window -lsfml-system
+CXXFLAGS=-std=c++11 -DDEBUG -Ofast -Wall -Wextra -lsfml-graphics -lsfml-window -lsfml-system
 SOURCE=src/main.cc
 BIN=chip8
 

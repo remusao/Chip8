@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 
         while (window.isOpen())
         {
-            chip8.cycle();
+            chip8.cycle(window);
 
             if (chip8.getDrawFlag())
             {

@@ -40,7 +40,13 @@ namespace chip8
 
         unsigned getKey()
         {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num1))
+                return 0;
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num2))
+                return 1;
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num3))
+                return 3;
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
                 return 4;
             else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
                 return 5;
@@ -82,7 +88,7 @@ namespace chip8
             // Methods
             void initialize();
             void loadGame(const char* rom);
-            void cycle();
+            void cycle(sf::RenderWindow& window);
 
             bool getDrawFlag() const { return drawFlag_; }
             void setDrawFlag(bool value) { drawFlag_ = value; }
@@ -95,7 +101,7 @@ namespace chip8
         private:
 
             // Decode and execute one opcode
-            void decode(Word opcode);
+            void decode(Word opcode, sf::RenderWindow& window);
             // Draw a sprite
             void drawSprite(Word opcode);
 
@@ -224,7 +230,7 @@ namespace chip8
 
 
     template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::cycle()
+    void Chip8<Byte, Word, scale>::cycle(sf::RenderWindow& window)
     {
         // Used to emulate at 60 Hz
         static sf::Clock    clock;
@@ -236,7 +242,7 @@ namespace chip8
             nbCycles = 0;
         }
 
-        if (nbCycles < 60)
+        if (nbCycles <= 10000)
         {
             // Fetch opcode
             Word opcode =
@@ -247,7 +253,7 @@ namespace chip8
             pc_ += 2;
 
             // Decode and execute opcode
-            decode(opcode);
+            decode(opcode, window);
 
             // Update timers
             if (delay_timer_ > 0)
@@ -266,12 +272,14 @@ namespace chip8
 
 
     template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::decode(Word opcode)
+    void Chip8<Byte, Word, scale>::decode(Word opcode, sf::RenderWindow& window)
     {
         Byte        tmp; // used for sum and sub
         sf::Event   event; // used to wait for an event
 
+# ifdef DEBUG
         std::cerr << "\033[32m" << std::hex << opcode << "\033[37m ";
+# endif
 
         switch (getOpcode(opcode))
         {
@@ -422,13 +430,19 @@ namespace chip8
             case SKIPS_PRESS:
                 // EX9E - Skips the next instruction if the key stored in VX is pressed
                 if (key_[registers_[get<1>(opcode)]])
+				{
+					key_[registers_[get<1>(opcode)]] = false;
                     pc_ += 2;
+				}
                 debug("Skips_press");
                 break;
             case SKIPS_NPRESS:
                 // EXA1 - Skips the next instruction if the key stored in VX isn't pressed
                 if (!key_[registers_[get<1>(opcode)]])
                     pc_ += 2;
+				else
+					key_[registers_[get<1>(opcode)]] = false;
+
                 debug("Skips_npress");
                 break;
             case SET_XTIMER:
@@ -440,9 +454,12 @@ namespace chip8
                 // FX0A - A key press is awaited, and then stored in VX
                 do
                 {
+					window.waitEvent(event);
                     if (event.type == sf::Event::KeyPressed)
                         registers_[get<1>(opcode)] = getKey();
                 } while (event.type != sf::Event::KeyPressed);
+                key_[registers_[get<1>(opcode)]] = false;
+
                 debug("Key_wait");
                 break;
             case SET_TIMERX:
