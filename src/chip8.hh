@@ -37,13 +37,6 @@ namespace chip8
         };
 
 
-        // Used to retreive some part of a 16-bits word
-        template <unsigned offset, typename Word>
-        Word get(Word opcode)
-        {
-            return (opcode >> (12 - offset * 4)) & 0x000F;
-        }
-
 
         unsigned getKey()
         {
@@ -110,7 +103,7 @@ namespace chip8
             std::array<Byte, 4096>      memory_; // Memory
             std::array<Byte, 16>        registers_; // registers
             Word                        I_; // Index register
-            Word                        pc_; // program counter
+            unsigned pc_; // program counter
             std::array<bool, 64 * 32>   screen_; // Screen
             bool                        drawFlag_;
 
@@ -166,17 +159,14 @@ namespace chip8
     void Chip8<Byte, Word, scale>::loadGame(const char* rom)
     {
         std::ifstream ifs;
-        char c;
 
-        ifs.open(rom, std::ifstream::in);
+        ifs.open(rom, std::ifstream::in | std::ifstream::binary);
 
         error("Loading game: ", rom);
 
         for (unsigned i = 0; ifs.good(); ++i)
         {
-            ifs >> c;       // get character from file
-            if (ifs.good())
-                memory_[pc_ + i] = c;
+            memory_[pc_ + i] = ifs.get();
         }
         ifs.close();
     }
@@ -192,11 +182,11 @@ namespace chip8
     template <typename Byte, typename Word, unsigned scale>
     void Chip8<Byte, Word, scale>::draw(sf::RenderWindow& window) const
     {
-        for (unsigned y = 0; y < 64; ++y)
+        for (unsigned y = 0; y < 32; ++y)
         {
-            for (unsigned x = 0; x < 32; ++x)
+            for (unsigned x = 0; x < 64; ++x)
             {
-                if (screen_[y * x])
+                if (screen_[(y * 64) + x])
                 {
                     sf::RectangleShape sprite(sf::Vector2f(scale, scale));
                     sprite.setPosition(x * scale, y * scale);
@@ -281,6 +271,8 @@ namespace chip8
         Byte        tmp; // used for sum and sub
         sf::Event   event; // used to wait for an event
 
+        std::cerr << "\033[32m" << std::hex << opcode << "\033[37m" << std::endl;
+
         switch (getOpcode(opcode))
         {
             case CLEAR:
@@ -293,19 +285,19 @@ namespace chip8
                 // 00EE - Returns from a subroutine
                 --sp_;
                 pc_ = stack_[sp_];
-                error("Returns");
+                error("Return ", stack_[sp_]);
                 break;
             case JUMP:
                 // 1NNN - Jumps to address NNN
                 pc_ = opcode & 0x0FFF;
-                error("Jumps");
+                error("Jumps ", pc_);
                 break;
             case CALL:
                 // 2NNN - Calls subroutine at NNN
                 ++sp_;
                 stack_[sp_] = pc_;
-                pc_ = opcode & 0x0FFF;
-                error("Calls");
+                pc_ = (opcode & 0x0FFF);
+                error("Calls ", pc_);
                 break;
             case SKIPS_EQ_XNN:
                 // 3XNN - Skips the next instruction if VX equals NN
@@ -503,7 +495,7 @@ namespace chip8
 				I_ += get<1>(opcode) + 1;
                 error("Fills_0X");
                 break;
-            case UNKNOWN:
+            default:
                 error("Unknown");
                 break;
         };

@@ -163,7 +163,7 @@ namespace chip8
     {
         Opcode res = UNKNOWN;
 
-        switch (opcode >> 12)
+        switch (get<0>(opcode))
         {
             case 0:
                 switch (opcode)

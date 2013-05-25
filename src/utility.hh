@@ -3,6 +3,13 @@
 
 namespace chip8
 {
+    // Used to retreive some part of a 16-bits word
+    template <unsigned offset, typename Word>
+    Word get(Word opcode)
+    {
+        return (opcode >> (12 - offset * 4)) & 0x000F;
+    }
+
     // Used to error information on cerr
     template <typename T>
     void error(T message)
