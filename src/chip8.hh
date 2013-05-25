@@ -271,7 +271,7 @@ namespace chip8
         Byte        tmp; // used for sum and sub
         sf::Event   event; // used to wait for an event
 
-        std::cerr << "\033[32m" << std::hex << opcode << "\033[37m" << std::endl;
+        std::cerr << "\033[32m" << std::hex << opcode << "\033[37m ";
 
         switch (getOpcode(opcode))
         {
