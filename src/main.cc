@@ -20,33 +20,53 @@ int main(int argc, char *argv[])
         std::cerr << "Running game..." << std::endl;
 
         // Emulation loop
+        sf::Clock   clock;
+        unsigned    nbCyclesPerSec = 10;
+        unsigned    nbCycles = 0;
 
+        // Running emulator
         while (window.isOpen())
         {
-            chip8.cycle(window);
-
-            if (chip8.getDrawFlag())
+            if (nbCycles < nbCyclesPerSec)
             {
-                window.clear();
-                chip8.draw(window);
-                window.display();
-                chip8.setDrawFlag(false);
+                chip8.cycle();
+                ++nbCycles;
             }
 
-            sf::Event event;
-            while (window.pollEvent(event))
+            if (clock.getElapsedTime().asMilliseconds() >= 1000 / 60)
             {
-                switch (event.type)
+                // Update timers
+                chip8.updateTimers();
+                nbCycles = 0;
+
+                // Update screen
+                if (chip8.getDrawFlag())
                 {
-                    case sf::Event::Closed:
-                        window.close();
-                        break;
-                    case sf::Event::KeyPressed:
-                        chip8.setKey();
-                        break;
-                    default:
-                        break;
-                };
+                    window.clear();
+                    chip8.draw(window);
+                    window.display();
+                    chip8.setDrawFlag(false);
+                }
+
+                // Deal with events
+                sf::Event event;
+                while (window.pollEvent(event))
+                {
+                    switch (event.type)
+                    {
+                        case sf::Event::Closed:
+                            window.close();
+                            break;
+                        case sf::Event::KeyPressed:
+                            chip8.setKey();
+                            break;
+                        default:
+                            break;
+                    };
+                }
+
+                // Restart clock
+                clock.restart();
             }
         }
     }

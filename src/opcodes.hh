@@ -7,46 +7,48 @@ namespace chip8
 {
     enum Opcode
     {
-        CLEAR,
-        RETURNS,
-        JUMP,
-        CALL,
-        SKIPS_EQ_XNN,
-        SKIPS_NEQ_XNN,
-        SKIPS_EQ_XY,
-        SKIPS_NEQ_XY,
-        SET_XNN,
-        ADD_XNN,
-        SET_XY,
-        SET_OR_XY,
-        SET_AND_XY,
-        SET_XOR_XY,
         ADD_CARRY_XY,
-        SUB_BORROW_XY,
-        SHIFT_RIGHT_X,
-        SHIFT_LEFT_X,
-        SUB_BORROW_YX,
-        SET_INN,
-        JUMP_0NNN,
-        RAND,
-        DRAW,
-        SKIPS_PRESS,
-        SKIPS_NPRESS,
-        SET_XTIMER,
-        KEY_AWAIT,
-        SET_TIMERX,
-        SET_SOUNDX,
         ADD_IX,
-        SET_I_SPRITE,
-        STORE_BINARY,
-        STORE_0X,
+        ADD_XNN,
+        CALL,
+        CLEAR,
+        DRAW,
         FILLS_0X,
+        JUMP,
+        JUMP_0NNN,
+        KEY_AWAIT,
+        RAND,
+        RETURNS,
+        SET_AND_XY,
+        SET_INN,
+        SET_I_SPRITE,
+        SET_OR_XY,
+        SET_SOUNDX,
+        SET_TIMERX,
+        SET_XNN,
+        SET_XOR_XY,
+        SET_XTIMER,
+        SET_XY,
+        SHIFT_LEFT_X,
+        SHIFT_RIGHT_X,
+        SKIPS_EQ_XNN,
+        SKIPS_EQ_XY,
+        SKIPS_NEQ_XNN,
+        SKIPS_NEQ_XY,
+        SKIPS_NPRESS,
+        SKIPS_PRESS,
+        STORE_0X,
+        STORE_BINARY,
+        SUB_BORROW_XY,
+        SUB_BORROW_YX,
         UNKNOWN
     };
 
-    void prettyPrint(Opcode opcode)
+    template <typename Word>
+    void prettyPrint(Opcode opcode, Word value)
     {
 # ifdef DEBUG
+        std::cerr << "\033[32m" << std::hex << value << "\033[37m ";
         switch (opcode)
         {
             case CLEAR:
