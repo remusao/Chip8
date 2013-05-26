@@ -45,6 +45,8 @@ namespace chip8
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num2))
                 return 1;
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num3))
+                return 2;
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num4))
                 return 3;
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
                 return 4;
