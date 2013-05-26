@@ -44,10 +44,10 @@ namespace chip8
         UNKNOWN
     };
 
+# ifdef DEBUG
     template <typename Word>
     void prettyPrint(Opcode opcode, Word value)
     {
-# ifdef DEBUG
         std::cerr << "\033[32m" << std::hex << value << "\033[37m ";
         switch (opcode)
         {
@@ -157,8 +157,13 @@ namespace chip8
                 debug("Unknown");
                 break;
         };
-#endif
     }
+# else
+    template <typename Word>
+    void prettyPrint(Opcode, Word)
+    {
+    }
+# endif
 
     template <typename Word>
     Opcode getOpcode(Word opcode)

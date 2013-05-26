@@ -1,7 +1,6 @@
 #ifndef CHIP8_HH_
 # define CHIP8_HH_
 
-
 # include <fstream>
 # include <iostream>
 # include <stdlib.h>
@@ -13,74 +12,9 @@
 
 namespace chip8
 {
-    // Private namespace to hide some implementation
-    namespace
-    {
-        unsigned char chip8_fontset[80] =
-        {
-            0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
-            0x20, 0x60, 0x20, 0x20, 0x70, // 1
-            0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
-            0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
-            0x90, 0x90, 0xF0, 0x10, 0x10, // 4
-            0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
-            0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
-            0xF0, 0x10, 0x20, 0x40, 0x40, // 7
-            0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
-            0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
-            0xF0, 0x90, 0xF0, 0x90, 0x90, // A
-            0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
-            0xF0, 0x80, 0x80, 0x80, 0xF0, // C
-            0xE0, 0x90, 0x90, 0x90, 0xE0, // D
-            0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-            0xF0, 0x80, 0xF0, 0x80, 0x80  // F
-        };
-
-
-
-        unsigned getKey()
-        {
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num1))
-                return 0;
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num2))
-                return 1;
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num3))
-                return 2;
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num4))
-                return 3;
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
-                return 4;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-                return 5;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
-                return 6;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
-                return 7;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-                return 8;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-                return 9;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-                return 10;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
-                return 11;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
-                return 12;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::X))
-                return 13;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::C))
-                return 14;
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V))
-                return 15;
-            else
-                return 16;
-        }
-    }
-
-
     /// @class Chip8
     /// @brief Class for Chip8 emulator
-    template <typename Byte, typename Word, unsigned scale>
+    template <typename Byte, typename Word>
     class Chip8
     {
         public:
@@ -129,8 +63,8 @@ namespace chip8
     };
 
 
-    template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::initialize()
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::initialize()
     {
         debug("Initializing chip8 emulator");
 
@@ -164,8 +98,8 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::loadGame(const char* rom)
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::loadGame(const char* rom)
     {
         std::ifstream ifs;
 
@@ -181,15 +115,15 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::setKey()
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::setKey()
     {
         key_[getKey()] = true;
     }
 
 
-    template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::draw(sf::RenderWindow& window) const
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::draw(sf::RenderWindow& window) const
     {
         for (unsigned y = 0; y < 32; ++y)
         {
@@ -197,8 +131,8 @@ namespace chip8
             {
                 if (screen_[(y * 64) + x])
                 {
-                    sf::RectangleShape sprite(sf::Vector2f(scale, scale));
-                    sprite.setPosition(x * scale, y * scale);
+                    sf::RectangleShape sprite(sf::Vector2f(1, 1));
+                    sprite.setPosition(x, y);
                     sprite.setFillColor(sf::Color::White);
                     window.draw(sprite);
                 }
@@ -207,8 +141,8 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::drawSprite(Word opcode)
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::drawSprite(Word opcode)
     {
         Word x = registers_[get<1>(opcode)];
         Word y = registers_[get<2>(opcode)];
@@ -231,8 +165,8 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::updateTimers()
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::updateTimers()
     {
         if (delay_timer_ > 0)
             --delay_timer_;
@@ -246,8 +180,8 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::cycle()
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::cycle()
     {
         // Fetch opcode
         Word opcode =
@@ -262,8 +196,8 @@ namespace chip8
     }
 
 
-    template <typename Byte, typename Word, unsigned scale>
-    void Chip8<Byte, Word, scale>::decode(Word opcode)
+    template <typename Byte, typename Word>
+    void Chip8<Byte, Word>::decode(Word opcode)
     {
         Byte        tmp; // used for sum and sub
         auto instr = getOpcode(opcode);
